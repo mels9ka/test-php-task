@@ -2,6 +2,9 @@
 
 namespace services\db;
 
+use Exception;
+use mysqli;
+
 class MYSQLConnection implements DBConnection
 {
     const KEY_HOST = 'host';
@@ -23,7 +26,7 @@ class MYSQLConnection implements DBConnection
 
     public function get()
     {
-        // TODO: Implement get() method.
+        return $this->connection;
     }
 
     function create($params)

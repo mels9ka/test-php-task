@@ -2,13 +2,9 @@
 
 namespace services\router;
 
-class Router
+interface Router
 {
+    public function addRule($route, $handler);
 
-    private $rules;
-
-    function __construct()
-    {
-
-    }
+    public function route();
 }

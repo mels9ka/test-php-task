@@ -7,7 +7,7 @@
  *
  * @throws Exception
  */
-function autoload($className)
+function autoload(string $className)
 {
     $baseDir = __DIR__;
     $fileExtension = 'php';

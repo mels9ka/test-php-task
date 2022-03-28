@@ -1,9 +1,16 @@
 <?php
 
-require_once __DIR__ . '/autoload.php';
-
+use services\router\Router;
 use services\ServiceManager;
 
-$serviceManager = new ServiceManager();
-echo $serviceManager->has('zzz') ? 'yes' : 'no';
+require_once __DIR__ . '/autoload.php';
 
+/** @var ServiceManager $serviceManager */
+$serviceManager = require __DIR__ . '/services.php';
+$router = $serviceManager->get(Router::class);
+if ($router) {
+    $router->route();
+
+} else {
+    throw new Exception('Router service not found');
+}
