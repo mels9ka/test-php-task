@@ -4,6 +4,8 @@ namespace controllers;
 
 abstract class BaseController
 {
+    protected const KEY_USER_SESSION = 'session_user';
+
     public function render(string $view, array $_data_ = [])
     {
         $className = strtolower($this::class);
@@ -29,4 +31,15 @@ abstract class BaseController
         return (string)$_SERVER['REQUEST_METHOD'] === 'POST';
     }
 
+    protected function userIsGuest(): bool
+    {
+        return array_key_exists(self::KEY_USER_SESSION, $_SESSION) === false;
+    }
+
+    protected function redirect($url, $code = 301)
+    {
+        $location = sprintf('Location: %s', $url);
+        header($location,TRUE,$code);
+        exit();
+    }
 }

@@ -4,6 +4,7 @@ namespace services\db;
 
 use Exception;
 use mysqli;
+use PDO;
 
 class MYSQLConnection implements DBConnection
 {
@@ -24,7 +25,7 @@ class MYSQLConnection implements DBConnection
         // TODO: Implement query() method.
     }
 
-    public function get()
+    public function get(): PDO
     {
         return $this->connection;
     }
@@ -39,10 +40,21 @@ class MYSQLConnection implements DBConnection
             throw new Exception('Database connection failed. Wrong params used.');
         }
 
-        $connection = new mysqli($host, $user, $password, $dbName);
+        try {
+            $connection = new PDO(
+                sprintf('mysql:dbname=%s;host=%s', $dbName, $host),
+                $user,
+                $password
+            );
+
+        } catch (Exception $ex) {
+            throw new Exception($ex->getMessage());
+        }
+
+      /*  $connection = new mysqli($host, $user, $password, $dbName);
         if ($connection->connect_error) {
             throw new Exception('Database connection failed.');
-        }
+        }*/
 
         return $connection;
     }

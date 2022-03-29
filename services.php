@@ -5,10 +5,9 @@ use services\db\DBConnection;
 use services\db\MYSQLConnection;
 use services\router\Router;
 use services\router\SimpleRouter;
-use controllers\LoginController;
-use controllers\RegistrationController;
-use controllers\RestoreController;
+use controllers\UserController;
 use controllers\SiteController;
+use controllers\ProfileController;
 
 $serviceManager = ServiceManager::getInstance();
 $serviceManager->add(DBConnection::class, function () {
@@ -18,15 +17,17 @@ $serviceManager->add(DBConnection::class, function () {
         MYSQLConnection::KEY_PASSWORD => 'password',
         MYSQLConnection::KEY_DATABASE => 'mels9ka_bd',
     ];
-    return new MYSQLConnection($dbConnectParams);
+    return (new MYSQLConnection($dbConnectParams))->get();
 });
 $serviceManager->add(Router::class, function () {
     $router = new SimpleRouter();
-    $router->addRule('login', [LoginController::class => 'actionLogin']);
-    $router->addRule('registration', [RegistrationController::class => 'actionRegistration']);
-    $router->addRule('restore', [RestoreController::class => 'actionRestore']);
     $router->addRule('index', [SiteController::class => 'actionIndex']);
     $router->addRule('error', [SiteController::class => 'actionError']);
+    $router->addRule('login', [UserController::class => 'actionLogin']);
+    $router->addRule('registration', [UserController::class => 'actionRegistration']);
+    $router->addRule('restore', [UserController::class => 'actionRestore']);
+    $router->addRule('logout', [UserController::class => 'actionLogout']);
+    $router->addRule('profile', [ProfileController::class => 'actionProfile']);
     return $router;
 });
 

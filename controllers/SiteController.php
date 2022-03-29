@@ -6,7 +6,9 @@ class SiteController extends BaseController
 {
     public function actionIndex()
     {
-        $this->render('index');
+        $this->render('index', [
+            'isGuest' => $this->userIsGuest()
+        ]);
     }
 
     public function actionError()
