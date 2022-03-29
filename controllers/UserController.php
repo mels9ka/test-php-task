@@ -8,7 +8,10 @@ use services\ServiceManager;
 
 class UserController extends BaseController
 {
-    private array $errors = [];
+    protected const KEY_USER_RESTORE_SESSION = 'session_restore_user';
+    protected const KEY_RESTORE_QUERY_PARAM = 'restore';
+    protected const USER_RESTORE_SCENARIO = 'user_restore';
+    protected const GUEST_RESTORE_SCENARIO = 'guest_restore';
 
     public function actionLogin()
     {
@@ -36,15 +39,6 @@ class UserController extends BaseController
         ]);
     }
 
-    public function actionLogout()
-    {
-        if (!$this->userIsGuest()) {
-           unset($_SESSION[self::KEY_USER_SESSION]);
-        }
-
-        $this->redirect('/?route=index');
-    }
-
     public function actionRegistration()
     {
         if (!$this->userIsGuest()) {
@@ -66,6 +60,87 @@ class UserController extends BaseController
 
         $this->render('registration', [
             'title' => 'Registration',
+            'errors' => $this->errors,
+        ]);
+    }
+
+    public function actionLogout()
+    {
+        if (!$this->userIsGuest()) {
+            unset($_SESSION[self::KEY_USER_SESSION]);
+        }
+
+        $this->redirect('/?route=index');
+    }
+
+    public function actionRestore()
+    {
+        if (!$this->userIsGuest()) {
+            $this->redirect('/?route=index');
+        }
+
+        $restoreLink = null;
+        if ($this->isPostRequest()) {
+            $login = $_POST['login'] ?? '';
+            if ($this->validateBeforeRestore($login)) {
+                if ($this->checkUserExists($login)) {
+                    $hash = md5($login);
+                    $_SESSION[self::KEY_USER_RESTORE_SESSION] = $login;
+                    $restoreLink = sprintf('/?route=change-password&%s=%s',
+                        self::KEY_RESTORE_QUERY_PARAM,
+                        $hash
+                    );
+
+                } else {
+                    $this->errors['general'] = 'Restore error (user not exists)';
+                }
+            }
+        }
+
+        $this->render('restore', [
+            'restoreLink' => $restoreLink,
+            'errors' => $this->errors
+        ]);
+    }
+
+    public function actionChangePassword()
+    {
+        $scenario = self::USER_RESTORE_SCENARIO;
+        if ($this->userIsGuest()) {
+            $login = $_SESSION[self::KEY_USER_RESTORE_SESSION] ?? null;
+            $clientRestoreHash = $_GET[self::KEY_RESTORE_QUERY_PARAM] ?? null;
+            if (!$login || !$clientRestoreHash || md5($login) != $clientRestoreHash) {
+                $this->redirect('/?route=error');
+            }
+
+            $scenario = self::GUEST_RESTORE_SCENARIO;
+        } else {
+            $login = $_SESSION[self::KEY_USER_SESSION];
+        }
+
+        if ($this->isPostRequest()) {
+            $oldPassword = $_POST['password_old'] ?? '';
+            if ($scenario === self::GUEST_RESTORE_SCENARIO) {
+                $oldPassword = false;
+            }
+
+            $newPassword = $_POST['password_new'] ?? '';
+            $newPasswordRepeat = $_POST['password_new_repeat'] ?? '';
+            if ($this->validateBeforeChangePassword($oldPassword, $newPassword, $newPasswordRepeat)) {
+                $passwordChanged = $this->changeUserPassword($login, $oldPassword, $newPassword);
+                if ($passwordChanged) {
+                    $this->setNotification('Password changed successfully!');
+                    $this->redirect('/?route=profile');
+
+                } else {
+                    $this->errors['general'] = 'Password not changed';
+                }
+            }
+        }
+
+        $this->render('change_password', [
+            'title' => sprintf('Change password for user %s', $login),
+            'scenario' => $scenario,
             'errors' => $this->errors,
         ]);
     }
@@ -125,14 +200,14 @@ class UserController extends BaseController
         }
 
         if (count($this->errors) === 0 &&
-            $this->checkUserAlreadyExists($login)) {
+            $this->checkUserExists($login)) {
             $this->errors['general'] = sprintf('User with login <b> %s </b> already exists', $login);
         }
 
         return count($this->errors) === 0;
     }
 
-    private function checkUserAlreadyExists($login): bool
+    private function checkUserExists($login): bool
     {
         /** @var PDO $dbConnection */
         $dbConnection = ServiceManager::getInstance()->get(DBConnection::class);
@@ -159,5 +234,69 @@ class UserController extends BaseController
         }
 
         return false;
+    }
+
+    private function validateBeforeChangePassword($oldPassword, $newPassword, $newPasswordRepeat): bool
+    {
+        $this->errors = [];
+        if ($oldPassword !== false && strlen($oldPassword) === 0) {
+            $this->errors['password_old'] = '<b>Old password</b> field cannot be empty';
+        }
+
+        if (strlen($newPassword) === 0) {
+            $this->errors['password_new'] = '<b>New password</b> field cannot be empty';
+        }
+
+        if (strlen($newPasswordRepeat) === 0) {
+            $this->errors['password_new_repeat'] = '<b>Repeat new password</b> field cannot be empty';
+        }
+
+        if (strlen($newPassword) > 0 &&
+            strlen($newPasswordRepeat) > 0 &&
+            $newPassword !== $newPasswordRepeat
+        ) {
+            $this->errors['password_new_repeat'] = 'Fields <b>New password</b> and <b>Repeat new password</b> must be equal';
+        }
+
+        return count($this->errors) === 0;
+    }
+
+    private function changeUserPassword($login, $oldPassword, $newPassword): bool
+    {
+        if ($oldPassword === false) {
+            $sql = "select * from users where login=:login";
+            $data = ['login' => $login];
+
+        } else {
+            $sql = "select * from users where login=:login and password=:password";
+            $data = [
+                'login' => $login,
+                'password' => md5($oldPassword),
+            ];
+        }
+
+        $query = $this->dbConnection->prepare($sql);
+        $query->execute($data);
+        if ($query->rowCount() === 1) {
+            $query = $this->dbConnection->prepare("update users set password=:password, updated_at=:updated_at where login=:login");
+            $data = [
+                'password' => md5($newPassword),
+                'updated_at' => time(),
+                'login' => $login
+            ];
+            return $query->execute($data);
+        }
+
+        return false;
+    }
+
+    private function validateBeforeRestore($login): bool
+    {
+        $this->errors = [];
+        if (strlen($login) === 0) {
+            $this->errors['login'] = 'Login field cannot be empty';
+        }
+
+        return count($this->errors) === 0;
     }
 }

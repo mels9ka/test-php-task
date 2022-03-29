@@ -12,5 +12,7 @@
 <body>
 <h1>Error <?= $code ?></h1>
 <p> Page not found </p>
+<br>
+<a href="/">Main page</a>
 </body>
 </html>

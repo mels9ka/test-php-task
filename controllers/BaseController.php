@@ -2,9 +2,24 @@
 
 namespace controllers;
 
+use PDO;
+use services\db\DBConnection;
+use services\ServiceManager;
+
 abstract class BaseController
 {
     protected const KEY_USER_SESSION = 'session_user';
+    protected const KEY_USER_NOTIFICATIONS = 'session_notifications';
+
+    protected array $errors = [];
+
+    /** @var PDO */
+    protected $dbConnection;
+
+    public function __construct()
+    {
+        $this->dbConnection = ServiceManager::getInstance()->get(DBConnection::class);
+    }
 
     public function render(string $view, array $_data_ = [])
     {
@@ -41,5 +56,19 @@ abstract class BaseController
         $location = sprintf('Location: %s', $url);
         header($location,TRUE,$code);
         exit();
+    }
+
+    protected function setNotification(string $notification)
+    {
+        $notificationsList = $_SESSION[self::KEY_USER_NOTIFICATIONS] ?? [];
+        $notificationsList[] = $notification;
+        $_SESSION[self::KEY_USER_NOTIFICATIONS] = $notificationsList;
+    }
+
+    protected function getNotifications(): string
+    {
+        $notificationsList = $_SESSION[self::KEY_USER_NOTIFICATIONS] ?? [];
+        unset($_SESSION[self::KEY_USER_NOTIFICATIONS]);
+        return implode('<br>', $notificationsList);
     }
 }

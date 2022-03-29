@@ -11,6 +11,7 @@
 </head>
 <body>
 <h1>Main page</h1>
+<p style="color: green"><?= $this->getNotifications() ?></p>
 <div>
     <?php if ($isGuest): ?>
         <a href="/?route=login">Login</a>

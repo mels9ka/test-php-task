@@ -30,6 +30,8 @@
             Login
         </button>
     </form>
+    <br>
+    <a href="/?route=restore">Restore</a>
 </div>
 </body>
 </html>

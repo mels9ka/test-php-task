@@ -10,6 +10,9 @@ class ProfileController extends BaseController
             $this->redirect('/?route=index');
         }
 
-        $this->render('index');
+        $login = $_SESSION[self::KEY_USER_SESSION];
+        $this->render('index', [
+            'login' => $login
+        ]);
     }
 }

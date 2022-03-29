@@ -26,6 +26,7 @@ $serviceManager->add(Router::class, function () {
     $router->addRule('login', [UserController::class => 'actionLogin']);
     $router->addRule('registration', [UserController::class => 'actionRegistration']);
     $router->addRule('restore', [UserController::class => 'actionRestore']);
+    $router->addRule('change-password', [UserController::class => 'actionChangePassword']);
     $router->addRule('logout', [UserController::class => 'actionLogout']);
     $router->addRule('profile', [ProfileController::class => 'actionProfile']);
     return $router;
