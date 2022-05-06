@@ -23,7 +23,7 @@ abstract class BaseController
 
     public function render(string $view, array $_data_ = [])
     {
-        $className = strtolower($this::class);
+        $className = strtolower(get_class($this));
         $className = str_replace('controller', '', $className);
         $parts = explode('\\', $className);
         $controllerViewDir = end($parts);
