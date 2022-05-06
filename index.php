@@ -7,7 +7,6 @@ require_once __DIR__ . '/autoload.php';
 
 // Start the session
 session_start();
-
 /** @var ServiceManager $serviceManager */
 $serviceManager = require __DIR__ . '/services.php';
 $router = $serviceManager->get(Router::class);
