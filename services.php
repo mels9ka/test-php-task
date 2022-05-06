@@ -1,5 +1,6 @@
 <?php
 
+use controllers\CreationalPatternsController;
 use services\ServiceManager;
 use services\db\DBConnection;
 use services\db\MYSQLConnection;
@@ -29,6 +30,13 @@ $serviceManager->add(Router::class, function () {
     $router->addRule('change-password', [UserController::class => 'actionChangePassword']);
     $router->addRule('logout', [UserController::class => 'actionLogout']);
     $router->addRule('profile', [ProfileController::class => 'actionProfile']);
+
+    // Abstract factory
+    $router->addRule('abstract-factory', [CreationalPatternsController::class => 'actionAbstractFactory']);
+
+    /*$router->addRule('structural/abstract-factory', [ProfileController::class => 'actionProfile']);
+    $router->addRule('behavioral/abstract-factory', [ProfileController::class => 'actionProfile']);*/
+
     return $router;
 });
 
